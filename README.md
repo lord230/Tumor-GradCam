@@ -72,11 +72,8 @@ The base path location `results/` includes standard output elements tracking los
 
 ### Grad-CAM Graphical Confirmations
 
-Processing visualization routines found sequentially deployed within `results/gradcam/` produce explicit analytical models via LayerCAM protocols arraying original inputs beside structural logic triggers mapped via heatmap generation overlapping directly across evaluated MRI selections showing predictive analysis locations. 
+Processing visualization routines found sequentially deployed within `results/gradcam/` produce explicit analytical models via LayerCAM protocols. Sample systems automatically capture arrays of four explicit tests representing the four classifications, building composite frames linking the Original MRI arrays adjacent to the explicit Grad-CAM heat mapping structure and rendering the full unified view indicating specific classification focal bounds in alpha overlaid outputs. The `gradcam_summary.png` image matrix assembles all these data comparisons in to a single grid for accessible evaluation. 
 
-![GradCAM Class Array Mapping](results/gradcam/gradcam_summary.png)
-
-*The `gradcam_summary.png` image matrix array compiles comparisons across all primary target categories establishing functional structural baseline operations logically integrated within prediction mechanisms.*
 
 ## Running Application Instructions 
 
