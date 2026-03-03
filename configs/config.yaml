@@ -1,0 +1,71 @@
+# ==============================================================
+# Brain Tumor Classification - HybridMemoryNet Configuration
+# ==============================================================
+
+# ── Paths ──────────────────────────────────────────────────────
+paths:
+  dataset_root: "dataset"           # raw source (Training/ and Testing/ folders)
+  checkpoint_dir: "checkpoints"
+  log_dir: "logs"
+  results_dir: "results"
+
+
+# ── Data ───────────────────────────────────────────────────────
+data:
+  image_size: 224
+  batch_size: 24
+  num_workers: 4
+  val_split: 0.20                   # fraction of Training used for val
+  pin_memory: true
+  augment_train: true
+
+# ── Model ──────────────────────────────────────────────────────
+model:
+  num_classes: 4
+  cnn_out_dim: 512                  # projected dim from EfficientNet-B0
+  transformer_out_dim: 512          # projected dim from Swin-Tiny
+  fusion_embed_dim: 512             # output of Channel Attention fusion
+  memory_scale: 10.0                # cosine similarity temperature
+
+  # Freeze options (saves VRAM on first runs)
+  freeze_cnn: false
+  freeze_transformer: false
+
+  # Gradient checkpointing (reduces VRAM, slightly slower)
+  gradient_checkpointing: true
+
+# ── Training ───────────────────────────────────────────────────
+training:
+  epochs: 100
+  optimizer: "adamw"
+  lr: 3.0e-4
+  weight_decay: 1.0e-4
+  grad_clip: 1.0                    # max gradient norm
+
+  # Scheduler
+  scheduler: "cosine"
+  warmup_epochs: 5
+  eta_min: 1.0e-6
+
+  # AMP
+  use_amp: true
+
+  # Early stopping
+  early_stopping_patience: 10
+
+  # Loss weights
+  lambda_prototype: 0.5             # weight for PrototypeCompactnessLoss
+  use_focal_loss: false             # toggle Focal loss (replaces CE)
+  focal_gamma: 2.0
+  focal_alpha: 1.0
+
+  # Checkpoint
+  save_every_epoch: true
+
+# ── Logging ────────────────────────────────────────────────────
+logging:
+  use_tensorboard: true
+  print_freq: 10                    # print every N batches
+
+# ── Reproducibility ────────────────────────────────────────────
+seed: 42

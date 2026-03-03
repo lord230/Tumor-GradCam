@@ -1,0 +1,36 @@
+{
+  "classes": [
+    "glioma",
+    "meningioma",
+    "notumor",
+    "pituitary"
+  ],
+  "val_split": 0.2,
+  "distribution": {
+    "glioma": {
+      "train_approx": 1864,
+      "val_approx": 465,
+      "test": 718
+    },
+    "meningioma": {
+      "train_approx": 1638,
+      "val_approx": 409,
+      "test": 306
+    },
+    "notumor": {
+      "train_approx": 1276,
+      "val_approx": 319,
+      "test": 405
+    },
+    "pituitary": {
+      "train_approx": 1642,
+      "val_approx": 410,
+      "test": 635
+    }
+  },
+  "totals": {
+    "train_approx": 6420,
+    "val_approx": 1603,
+    "test": 2064
+  }
+}

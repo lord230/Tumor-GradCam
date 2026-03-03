@@ -1,0 +1,38 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Checkpoints (large binary files)
+checkpoints/
+
+# Dataset / raw images
+dataset/
+data/
+
+# Logs and results
+logs/
+results/
+
+# PDF report
+*.pdf
+
+# Environment
+.env
+*.env
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp
+*.tmp
+*.bak
+Test/
