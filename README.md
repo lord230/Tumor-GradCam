@@ -46,8 +46,37 @@ Specific Class Categorical Logic Results:
 
 Running inference triggers exhaustive analytical plotting and detailed categorical matrices available immediately parsing within the resulting file structures automatically.
 
-*   **Numeric Metric Outputs:** The base path location `results/` includes standard output elements tracking loss ratios (`loss_curve.png`), training sequence histories, complete output reports alongside ROC outputs testing variables against precise matching, and the baseline matrix mapping specific miss rate (`confusion_matrix_test.png`).
-*   **Grad-CAM Graphical Verifications:** Processing visualization routines found sequentially deployed within `results/gradcam/` produce explicit analytical models via LayerCAM protocols. Sample systems automatically capture arrays of four explicit tests representing the four classifications, building composite frames linking the Original MRI arrays adjacent to the explicit Grad-CAM heat mapping structure and rendering the full unified view indicating specific classification focal bounds in alpha overlaid outputs. The `gradcam_summary.png` image matrix assembles all these data comparisons in to a single grid for accessible evaluation. 
+### Application Graphical Interface
+
+The interactive GUI platform (operated via `python gradcam_app/app.py`) provides direct analytical control allowing transparent evaluation of data samples directly overlaying structural Grad-CAM activation outputs. Users select layers adjusting blend configurations directly.
+
+| GUI Initialization and Image Load | Analysis Inference and Logic Evaluation |
+|:---:|:---:|
+| ![App screenshot](App%20Screenshots/Screenshot_491.png) | ![App logic process](App%20Screenshots/Screenshot_492.png) |
+
+*(Note: Alpha testing application graphical variants display detailed logical structures alongside interactive scaling.)*
+
+### Analytic Output Metrics
+
+The base path location `results/` includes standard output elements tracking loss ratios, training sequence histories, complete output reports alongside ROC outputs testing variables against precise matching, and the baseline matrix mapping proper categorical sorting metrics.
+
+**Training Performance Curves**
+| Accuracy Curve | Loss Component Ratio |
+|:---:|:---:|
+| ![Accuracy Metrics](results/accuracy_curve.png) | ![Loss Indexing](results/loss_curve.png) |
+
+**Diagnostic Matching Verifications**
+| Evaluated ROC Mapping | Output Confusion Matrix |
+|:---:|:---:|
+| ![ROC Plot Processing](results/roc_curve_test.png) | ![Confusion Matrix Check](results/confusion_matrix_test.png) |
+
+### Grad-CAM Graphical Confirmations
+
+Processing visualization routines found sequentially deployed within `results/gradcam/` produce explicit analytical models via LayerCAM protocols arraying original inputs beside structural logic triggers mapped via heatmap generation overlapping directly across evaluated MRI selections showing predictive analysis locations. 
+
+![GradCAM Class Array Mapping](results/gradcam/gradcam_summary.png)
+
+*The `gradcam_summary.png` image matrix array compiles comparisons across all primary target categories establishing functional structural baseline operations logically integrated within prediction mechanisms.*
 
 ## Running Application Instructions 
 
@@ -60,4 +89,5 @@ python main.py --eval-only
 # Deploy Grad-CAM Interactive Graphic User System Application
 python gradcam_app/app.py
 ```
+
 
