@@ -351,59 +351,170 @@ class Trainer:
         plt.savefig(self.results_dir / "accuracy_curve.png", dpi=150)
         plt.close()
 
-    def _generate_gradcam(self, loader: DataLoader, n_images: int = 8) -> None:
-        """Generate Grad-CAM visualizations on a few validation samples."""
-        import torchvision.transforms.functional as TF
-        from PIL import Image
+    def _generate_gradcam(
+        self,
+        loader: DataLoader,
+        n_per_class: int = 4,
+    ) -> int:
+        """
+        Generate enhanced Grad-CAM visualizations covering every class.
+
+        For each class, samples up to `n_per_class` images and saves:
+          • An individual side-by-side PNG  (original | heatmap | overlay)
+          • A combined `gradcam_summary.png` grid
+
+        Returns:
+            Total number of individual images saved.
+        """
+        import cv2
+        from PIL import Image, ImageDraw, ImageFont
 
         gradcam_dir = self.results_dir / "gradcam"
         gradcam_dir.mkdir(exist_ok=True)
 
+        n_classes = len(self.class_names)
+
+        # ── 1. Collect samples per class from the loader ────────────────────
+        gathered: dict[int, list[tuple[np.ndarray, np.ndarray, int, int]]] = {
+            c: [] for c in range(n_classes)
+        }
+        needed = n_per_class * n_classes
+
+        self.model.eval()
         target_layer = self.model.cnn.features[-1]
         hook = GradCAMHook(target_layer)
 
-        self.model.eval()
-        count = 0
-
         for images, targets in loader:
-            if count >= n_images:
+            if all(len(v) >= n_per_class for v in gathered.values()):
                 break
             images  = images.to(self.device)
             targets = targets.to(self.device)
-
             images.requires_grad_(True)
-            out = self.model(images)
+
+            out    = self.model(images)
             logits = out["logits"]
 
             for i in range(images.size(0)):
-                if count >= n_images:
-                    break
+                cls = int(targets[i].item())
+                if len(gathered[cls]) >= n_per_class:
+                    continue
+
                 self.optimizer.zero_grad(set_to_none=True)
-                logits[i, targets[i]].backward(retain_graph=True)
+                logits[i, cls].backward(retain_graph=True)
 
                 cam = hook.compute_cam()
                 if cam.ndim == 0:
                     continue
 
-                import cv2
                 img_np = images[i].detach().cpu().permute(1, 2, 0).numpy()
                 mean = np.array([0.485, 0.456, 0.406])
                 std  = np.array([0.229, 0.224, 0.225])
                 img_np = (img_np * std + mean).clip(0, 1)
 
-                cam_resized = cv2.resize(cam, (img_np.shape[1], img_np.shape[0]))
-                colormap = cm_module.jet(cam_resized)[..., :3]
-                overlay  = 0.4 * colormap + 0.6 * img_np
-                overlay  = (overlay.clip(0, 1) * 255).astype(np.uint8)
-
-                pred_name = self.class_names[logits[i].argmax().item()]
-                true_name = self.class_names[targets[i].item()]
-                fname = gradcam_dir / f"sample_{count:03d}_true-{true_name}_pred-{pred_name}.png"
-                Image.fromarray(overlay).save(fname)
-                count += 1
+                cam_r = cv2.resize(cam, (img_np.shape[1], img_np.shape[0]))
+                pred  = int(logits[i].argmax().item())
+                gathered[cls].append((img_np, cam_r, pred, cls))
 
         hook.remove()
-        print(f"  [SAVED] {count} Grad-CAM images → {gradcam_dir}")
+
+        # ── 2. Render & save individual side-by-side panels ─────────────────
+        PANEL_W, PANEL_H = 224, 224
+        LABEL_H          = 28
+        BORDER           = 3
+
+        def _render_panel(
+            img_np: np.ndarray,
+            cam_r:  np.ndarray,
+            pred:   int,
+            true:   int,
+        ) -> Image.Image:
+            """Return a (PANEL_W*3 + gaps) × (PANEL_H + LABEL_H) PIL image."""
+            correct = (pred == true)
+            accent  = (60, 200, 80) if correct else (220, 60, 60)   # BGR→RGB
+
+            # Original (resize for uniformity)
+            orig_u8 = (img_np * 255).astype(np.uint8)
+            orig_u8 = cv2.resize(orig_u8, (PANEL_W, PANEL_H))
+
+            # Heatmap only
+            heat_u8 = (cm_module.jet(cam_r)[..., :3] * 255).astype(np.uint8)
+            heat_u8 = cv2.resize(heat_u8, (PANEL_W, PANEL_H))
+
+            # Overlay (40 % CAM + 60 % original)
+            cam_r_224 = cv2.resize(cam_r, (PANEL_W, PANEL_H))
+            colormap  = cm_module.jet(cam_r_224)[..., :3]
+            orig_f    = (orig_u8 / 255.0)
+            overlay_f = (0.40 * colormap + 0.60 * orig_f).clip(0, 1)
+            overlay_u8 = (overlay_f * 255).astype(np.uint8)
+
+            gap     = 6
+            total_w = PANEL_W * 3 + gap * 2 + BORDER * 2
+            total_h = PANEL_H + LABEL_H + BORDER * 2
+
+            canvas = Image.new("RGB", (total_w, total_h), (18, 18, 30))
+            # coloured top border
+            draw = ImageDraw.Draw(canvas)
+            draw.rectangle([(0, 0), (total_w - 1, BORDER - 1)], fill=accent)
+
+            x = BORDER
+            y = BORDER
+            for tile in (orig_u8, heat_u8, overlay_u8):
+                canvas.paste(Image.fromarray(tile), (x, y))
+                x += PANEL_W + gap
+
+            # Label strip
+            true_name = self.class_names[true]
+            pred_name = self.class_names[pred]
+            tag = f"True: {true_name}   Pred: {pred_name}"
+            try:
+                font = ImageFont.truetype("arial.ttf", 12)
+            except OSError:
+                font = ImageFont.load_default()
+            draw.rectangle(
+                [(0, BORDER + PANEL_H), (total_w - 1, total_h - 1)],
+                fill=(25, 25, 40),
+            )
+            draw.text((8, BORDER + PANEL_H + 6), tag, fill=accent, font=font)
+
+            return canvas
+
+        saved_panels: list[Image.Image] = []
+        count = 0
+
+        for cls_idx in range(n_classes):
+            cls_name = self.class_names[cls_idx]
+            for s_idx, (img_np, cam_r, pred, true) in enumerate(gathered[cls_idx]):
+                panel = _render_panel(img_np, cam_r, pred, true)
+                fname = gradcam_dir / (
+                    f"sample_{count:03d}_true-{cls_name}"
+                    f"_pred-{self.class_names[pred]}.png"
+                )
+                panel.save(fname)
+                saved_panels.append(panel)
+                count += 1
+
+        # ── 3. Build summary grid ────────────────────────────────────────────
+        if saved_panels:
+            cols      = n_per_class
+            rows      = n_classes
+            pw, ph    = saved_panels[0].size
+            gap       = 8
+            grid_w    = cols * pw + (cols - 1) * gap
+            grid_h    = rows * ph + (rows - 1) * gap
+            grid      = Image.new("RGB", (grid_w, grid_h), (10, 10, 18))
+            for idx, panel in enumerate(saved_panels):
+                row = idx // cols
+                col = idx %  cols
+                x   = col * (pw + gap)
+                y   = row * (ph + gap)
+                grid.paste(panel, (x, y))
+            grid.save(self.results_dir / "gradcam" / "gradcam_summary.png")
+
+        print(
+            f"  [SAVED] {count} Grad-CAM panels + summary grid "
+            f"→ {gradcam_dir}"
+        )
+        return count
 
     def train(self, resume_from: Optional[str] = None) -> None:
         """
@@ -522,7 +633,7 @@ class Trainer:
         _, _, evaluator = self._run_epoch(test_loader, training=False)
         evaluator.save_all(self.results_dir, split)
 
-        self._generate_gradcam(test_loader, n_images=16)
+        self.gradcam_count = self._generate_gradcam(test_loader, n_per_class=4)
 
         history_path = self.results_dir / "training_history.json"
         with open(history_path, "w") as f:

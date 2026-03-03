@@ -287,8 +287,32 @@ def main() -> None:
         if k != "per_class_accuracy":
             print(f"  {k:<22}: {v}")
 
-    results_dir = Path(cfg["paths"]["results_dir"])
-    print(f"\nAll results saved to: {results_dir.resolve()}\n")
+    results_dir  = Path(cfg["paths"]["results_dir"])
+    gradcam_dir  = results_dir / "gradcam"
+    gradcam_count = getattr(trainer, "gradcam_count", 0)
+    n_classes     = len(class_names)
+
+    print(f"\n{'='*60}")
+    print(f"  All results saved to: {results_dir.resolve()}")
+    print(f"{'='*60}")
+    print(f"  {'Metrics':30s}")
+    for fname in [
+        f"confusion_matrix_test.png",
+        f"roc_curve_test.png",
+        f"classification_report_test.txt",
+        f"metrics_test.json",
+        f"loss_curve.png",
+        f"accuracy_curve.png",
+        f"training_history.json",
+    ]:
+        marker = "✔" if (results_dir / fname).exists() else "✘"
+        print(f"  {marker}  {fname}")
+    print()
+    print(f"  {'Grad-CAM visualizations':30s}")
+    print(f"  ✔  gradcam/  ({gradcam_count} panels, {n_classes} classes × 4 samples)")
+    print(f"     ├── sample_NNN_true-CLASS_pred-CLASS.png  × {gradcam_count}")
+    print(f"     └── gradcam_summary.png  (full grid)")
+    print(f"{'='*60}\n")
 
 if __name__ == "__main__":
     main()
