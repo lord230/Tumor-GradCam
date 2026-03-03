@@ -13,7 +13,6 @@ data/
 
 # Logs and results
 logs/
-results/
 
 # PDF report
 *.pdf

@@ -1,0 +1,13 @@
+{
+  "accuracy": 0.9903,
+  "precision_macro": 0.9884,
+  "recall_macro": 0.9895,
+  "f1_macro": 0.9889,
+  "roc_auc_macro": 0.9986,
+  "per_class_accuracy": {
+    "glioma": 0.9958,
+    "meningioma": 0.9804,
+    "notumor": 0.9975,
+    "pituitary": 0.9843
+  }
+}
